@@ -322,7 +322,10 @@ def subleaser_login(body: SubLogin):
 def subleaser_me(x_session: str = Header(default="")):
     s = read_token(x_session)
     mine = find_sub(s["e"])
-    out = {"name": s["n"], "email": s["e"], "profile": mine, "room": None, "bills": [], "complaints": []}
+    homes = {l["id"]: l["title"] for l in db.all_listings()}
+    msgs = [{**m, "home": homes.get(m["listing_id"], "a home")} for m in db.rows("messages")
+            if (m.get("email") or "").lower() == s["e"].lower()]
+    out = {"name": s["n"], "email": s["e"], "profile": mine, "room": None, "bills": [], "complaints": [], "messages": msgs}
     if mine:
         out["room"] = next((l for l in db.all_listings() if l["id"] == mine["listing_id"]), None)
         out["bills"] = [b for b in db.rows("bills") if b["subleaser_id"] == mine["id"]]

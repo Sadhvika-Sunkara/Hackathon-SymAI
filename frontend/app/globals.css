@@ -264,3 +264,11 @@ a.brand { display: block; text-decoration: none; }
 .sub-row .grow { flex: 1; min-width: 200px; }
 .sub-row .actions { width: 100%; justify-content: flex-start; padding-left: calc(52px + .8rem); }
 .sub-row .pill { margin-left: .35rem; }
+
+/* ---------- Message replies ---------- */
+.reply-in { font: inherit; font-size: .88rem; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 8px; min-width: 200px; }
+.reply-out { margin: .3rem 0 0; font-size: .85rem; color: var(--teal); font-weight: 600; }
+.msg-thread .you, .msg-thread .owner { margin: .25rem 0 0; font-size: .9rem; padding: .4rem .65rem; border-radius: 10px; }
+.msg-thread .you { background: #f1edfc; }
+.msg-thread .owner { background: #d5efea; color: #0b5f5d; font-weight: 600; }
+.msg-thread > div { flex: 1; }

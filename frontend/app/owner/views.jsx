@@ -389,13 +389,13 @@ export function MessagesView({ pw }) {
               <p className="v">{m.name} about “{homeOf(m.listing_id)}”</p>
               <p className="k"><a href={`mailto:${m.email}?subject=${encodeURIComponent("Re: " + homeOf(m.listing_id))}`}>{m.email}</a>, {m.created}</p>
               <p>{m.body}</p>
-              {m.reply && <p className="k">Your reply: {m.reply}</p>}
+              {m.reply && <p className="reply-out">↳ You replied: {m.reply}</p>}
             </div>
             <div className="actions">
               {m.status !== "replied" ? (
                 <>
-                  <input placeholder="Reply note" value={replies[m.id] || ""} onChange={e => setReplies({ ...replies, [m.id]: e.target.value })} />
-                  <button className="primary" onClick={() => msgs.patch(m.id, { status: "replied", reply: replies[m.id] || "Replied by email" })}>Mark replied</button>
+                  <input className="reply-in" placeholder="Write a reply..." value={replies[m.id] || ""} onChange={e => setReplies({ ...replies, [m.id]: e.target.value })} />
+                  <button className="primary sm" disabled={!(replies[m.id] || "").trim()} onClick={() => msgs.patch(m.id, { status: "replied", reply: replies[m.id].trim() })}>Send reply</button>
                 </>
               ) : <span className="pill resolved">replied</span>}
               <button className="danger" onClick={() => msgs.remove(m.id)}>Delete</button>
@@ -403,6 +403,7 @@ export function MessagesView({ pw }) {
           </li>
         ))}
         {msgs.rows.length === 0 && <p className="hint">No messages yet. They appear here when someone taps “Message the lease owner” on a home.</p>}
+        <p className="hint">Replies show in the sender's account when they log in with the same email.</p>
       </ul>
     </section>
   );

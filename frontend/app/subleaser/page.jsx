@@ -66,6 +66,25 @@ export default function Subleaser() {
             <p className="hint">No room is linked to {me.email} yet. Ask your owner to add you under Subleasers using this email.</p></div>
         )}
 
+        {me && (
+          <section className="panel">
+            <h2>Messages</h2>
+            <ul className="rows">
+              {(me.messages || []).map(m => (
+                <li key={m.id} className="msg-thread">
+                  <div>
+                    <p className="k">About “{m.home}” · {m.created}</p>
+                    <p className="you">You: {m.body}</p>
+                    {m.reply ? <p className="owner">Owner: {m.reply}</p> : <p className="k">Waiting for the owner to reply...</p>}
+                  </div>
+                  <span className={m.reply ? "pill active" : "pill open"}>{m.reply ? "Replied" : "Sent"}</span>
+                </li>
+              ))}
+              {(me.messages || []).length === 0 && <p className="hint">Messages you send to owners (using {me.email}) show here with their replies.</p>}
+            </ul>
+          </section>
+        )}
+
         {me?.profile && (
           <div className="sl-grid">
             <section className="panel">
