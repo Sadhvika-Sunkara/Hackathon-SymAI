@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { photoFor } from "./photos";
+import { HousemateList } from "./avatar";
 
 const API = process.env.NEXT_PUBLIC_API;
 
@@ -79,6 +80,11 @@ export function Details({ l, placeName, place, onClose }) {
 
         <Specs l={l} />
 
+        <div className="owner-verified">
+          <span className="ov-tick">✓</span>
+          <div><b>Verified lease owner</b><span>Government ID and face match checked (sample verification)</span></div>
+        </div>
+
         <div className="modal-grid">
           <div><p className="k">Who lives there</p><p className="v">{HOUSE[l.household] || l.household}</p></div>
           <div><p className="k">Nearest station</p><p className="v">{l.station}, {l.walk_min} min walk</p></div>
@@ -94,6 +100,9 @@ export function Details({ l, placeName, place, onClose }) {
             </div>
           )}
         </div>
+
+        <p className="k">Who lives here</p>
+        <HousemateList l={l} />
 
         <p className="k">Amenities</p>
         <Amenities l={l} />

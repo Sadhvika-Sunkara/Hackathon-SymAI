@@ -111,7 +111,10 @@ def delete_listing(listing_id):
 
 TABLES = {
     "subleasers": {"name": "TEXT NOT NULL", "email": "TEXT", "phone": "TEXT", "listing_id": "INTEGER",
-                   "status": "TEXT DEFAULT 'onboarding'", "move_in": "TEXT", "move_out": "TEXT", "lease_url": "TEXT"},
+                   "status": "TEXT DEFAULT 'onboarding'", "move_in": "TEXT", "move_out": "TEXT", "lease_url": "TEXT",
+                   # Identity verification (demo, sample data only: no ID images or numbers are stored)
+                   "id_type": "TEXT", "id_status": "TEXT DEFAULT 'not_started'", "face_status": "TEXT DEFAULT 'not_started'",
+                   "decision": "TEXT DEFAULT 'pending'"},
     "bills": {"subleaser_id": "INTEGER", "description": "TEXT NOT NULL", "amount": "REAL NOT NULL",
               "due": "TEXT", "paid": "INTEGER DEFAULT 0"},
     "messages": {"listing_id": "INTEGER", "name": "TEXT NOT NULL", "email": "TEXT NOT NULL", "body": "TEXT NOT NULL",
@@ -126,6 +129,10 @@ def init_owner_tables():
         for t, cols in TABLES.items():
             defs = ", ".join(f"{k} {v}" for k, v in cols.items())
             c.execute(f"CREATE TABLE IF NOT EXISTS {t} (id INTEGER PRIMARY KEY AUTOINCREMENT, {defs})")
+            have = {r["name"] for r in c.execute(f"PRAGMA table_info({t})")}
+            for k, v in cols.items():
+                if k not in have:
+                    c.execute(f"ALTER TABLE {t} ADD COLUMN {k} {v}")
 
 
 def rows(t):

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Avatar, VerifyBadges } from "../avatar";
 
 export const API = process.env.NEXT_PUBLIC_API;
 
@@ -225,17 +226,29 @@ export function SubleasersView({ pw, mode }) {
 
       <section>
         <h2 className="count">{subs.rows.length} {subs.rows.length === 1 ? "subleaser" : "subleasers"}</h2>
+        <p className="hint">Check each person's verified ID and face, then approve or decline. Demo: sample photos and sample verification only.</p>
         <ul className="rows">
           {subs.rows.map(s => (
-            <li key={s.id}>
-              <div>
-                <p className="v">{s.name} <span className={`pill ${s.status}`}>{s.status}</span></p>
+            <li key={s.id} className="sub-row">
+              <Avatar name={s.name} size={52} />
+              <div className="grow">
+                <p className="v">{s.name} <span className={`pill ${s.status}`}>{s.status}</span>
+                  {s.decision && s.decision !== "pending" && <span className={`pill ${s.decision === "approved" ? "active" : "open"}`}>{s.decision}</span>}
+                </p>
                 <p className="k">
                   {listings.find(l => l.id === s.listing_id)?.title ?? "No room assigned"}
                   {s.move_in ? `, in ${s.move_in}` : ""}{s.move_out ? `, out ${s.move_out}` : ""}
                 </p>
+                <VerifyBadges s={s} />
               </div>
               <div className="actions">
+                {(!s.decision || s.decision === "pending") && (
+                  <>
+                    <button className="primary sm" onClick={() => subs.patch(s.id, { decision: "approved" })}
+                      title={s.face_status === "verified" ? "" : "Not verified yet"}>Approve</button>
+                    <button className="danger" onClick={() => subs.patch(s.id, { decision: "declined" })}>Decline</button>
+                  </>
+                )}
                 {s.status === "onboarding" && <button className="reset" onClick={() => subs.patch(s.id, { status: "active" })}>Mark moved in</button>}
                 {s.status === "active" && <button className="reset" onClick={() => subs.patch(s.id, { status: "offboarded", move_out: today() })}>Offboard</button>}
                 <button className="danger" onClick={() => window.confirm(`Delete ${s.name}?`) && subs.remove(s.id)}>Delete</button>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Avatar, VerifyBadges, ID_LABEL } from "../avatar";
 
 const API = process.env.NEXT_PUBLIC_API;
 
@@ -37,6 +38,17 @@ export default function Subleaser() {
     loadMe();
   }
 
+  const [idType, setIdType] = useState("driver_licence");
+  const [vBusy, setVBusy] = useState("");
+  async function verify(step) {
+    setVBusy(step);
+    await new Promise(r => setTimeout(r, 1200)); // pretend the provider is checking
+    const r = await fetch(`${API}/subleaser/verify`, { method: "POST", headers, body: JSON.stringify({ step, id_type: idType }) });
+    setVBusy("");
+    if (r.status === 401) return logout();
+    loadMe();
+  }
+
   if (!token) return null;
   const owing = (me?.bills || []).filter(b => !b.paid).reduce((t, b) => t + b.amount, 0);
 
@@ -62,6 +74,35 @@ export default function Subleaser() {
               <p className="k">{me.room ? `${me.room.suburb}, $${me.room.rent}/week` : ""}</p>
               <p className="k">Status: <span className={`pill ${me.profile.status}`}>{me.profile.status}</span>{me.profile.move_in ? `, moved in ${me.profile.move_in}` : ""}</p>
               {me.profile.lease_url && <a className="link" href={me.profile.lease_url} target="_blank" rel="noreferrer">Open my lease</a>}
+            </section>
+
+            <section className="panel verify">
+              <h2>Verify your identity</h2>
+              <p className="hint">Your owner sees a verified badge and your photo before approving you. They never see your ID number.</p>
+              <div className="verify-top">
+                <Avatar name={me.name} size={64} />
+                <VerifyBadges s={me.profile} />
+              </div>
+              {me.profile.id_status !== "verified" && (
+                <div className="verify-step">
+                  <label className="field"><span>1. Government ID</span>
+                    <select value={idType} onChange={e => setIdType(e.target.value)}>
+                      {Object.entries(ID_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                    </select>
+                  </label>
+                  <div className="sample-id"><b>SAMPLE {ID_LABEL[idType].toUpperCase()}</b><span>{me.name}</span><span>No. •••• 4821</span></div>
+                  <button className="primary" disabled={!!vBusy} onClick={() => verify("id")}>{vBusy === "id" ? "Checking ID..." : "Verify with sample ID"}</button>
+                </div>
+              )}
+              {me.profile.id_status === "verified" && me.profile.face_status !== "verified" && (
+                <div className="verify-step">
+                  <p className="v">2. Face match</p>
+                  <p className="k">We compare a selfie to your ID photo.</p>
+                  <button className="primary" disabled={!!vBusy} onClick={() => verify("face")}>{vBusy === "face" ? "Matching face..." : "Run sample face match"}</button>
+                </div>
+              )}
+              {me.profile.face_status === "verified" && <p className="note">You're verified. Your owner can now approve you.</p>}
+              <p className="demo-tag">Demo only: no real ID or photos are collected.</p>
             </section>
 
             <section className="panel">

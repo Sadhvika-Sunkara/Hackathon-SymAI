@@ -330,6 +330,35 @@ def subleaser_me(x_session: str = Header(default="")):
     return out
 
 
+ID_TYPES = {"driver_licence", "passport", "photo_card"}
+
+
+class Verify(BaseModel):
+    step: str  # "id" or "face"
+    id_type: Optional[str] = None
+
+
+@app.post("/subleaser/verify")
+def subleaser_verify(body: Verify, x_session: str = Header(default="")):
+    """Demo identity check. A real build would hand this to a verification provider;
+    here it only records the result. No ID images, numbers or face photos are stored."""
+    s = read_token(x_session)
+    mine = find_sub(s["e"])
+    if not mine:
+        raise HTTPException(404, "Your owner hasn't added you yet")
+    if body.step == "id":
+        if body.id_type not in ID_TYPES:
+            raise HTTPException(422, "Choose an ID type")
+        db.update("subleasers", mine["id"], {"id_type": body.id_type, "id_status": "verified"})
+    elif body.step == "face":
+        if mine.get("id_status") != "verified":
+            raise HTTPException(409, "Verify your ID first")
+        db.update("subleasers", mine["id"], {"face_status": "verified"})
+    else:
+        raise HTTPException(422, "Unknown step")
+    return {"ok": True}
+
+
 class SubComplaint(BaseModel):
     title: str = Field(min_length=3, max_length=100)
     details: str = Field(default="", max_length=500)

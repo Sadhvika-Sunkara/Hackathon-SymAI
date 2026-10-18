@@ -15,6 +15,8 @@ export default function RoomMap({ rooms, place, current, onOpen }) {
   const layer = useRef(null);
   const Lref = useRef(null);
   const [ready, setReady] = useState(false);
+  const [size, setSize] = useState(0);
+  const resizeObs = useRef(null);
 
   useEffect(() => {
     let off = false;
@@ -28,10 +30,16 @@ export default function RoomMap({ rooms, place, current, onOpen }) {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map.current);
       layer.current = L.layerGroup().addTo(map.current);
+      // The panel can change size after the map loads; keep the map in sync so it
+      // doesn't point at the wrong part of the world.
+      const ro = new ResizeObserver(() => { if (map.current) map.current.invalidateSize(); setSize(n => n + 1); });
+      ro.observe(el.current);
+      resizeObs.current = ro;
       setReady(true);
     });
     return () => {
       off = true;
+      if (resizeObs.current) resizeObs.current.disconnect();
       if (map.current) map.current.remove();
       map.current = null;
     };
@@ -101,7 +109,7 @@ export default function RoomMap({ rooms, place, current, onOpen }) {
     } else {
       map.current.fitBounds(AUSTRALIA);
     }
-  }, [ready, place, current?.id]);
+  }, [ready, place, current?.id, size > 0]);
 
   return <div ref={el} className="room-map" role="region" aria-label="Map of homes across Australia" />;
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import "./home.css";
 import dynamic from "next/dynamic";
 import { Details, Specs, Amenities } from "./details";
+import { HousemateStack } from "./avatar";
 import { photoFor } from "./photos";
 
 const RoomMap = dynamic(() => import("./map"), { ssr: false, loading: () => <div className="room-map loading">Loading map...</div> });
@@ -179,6 +180,7 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
       <div className="nest-body">
         <h2>{l.title}</h2>
         <Specs l={l} />
+        <HousemateStack l={l} />
         <Amenities l={l} max={4} />
         {why.length > 0 && <div className="why">{why.map(w => <span key={w}>{w}</span>)}</div>}
 

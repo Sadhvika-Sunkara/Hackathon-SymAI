@@ -454,14 +454,26 @@ button.nest-btn { background: none; cursor: pointer; display: grid; place-items:
 .map-pop a { font-size: .8rem; font-weight: 700; color: #0e7c7b; text-align: center; }
 .dir-link { display: inline-block; margin-top: .25rem; font-size: .82rem; font-weight: 700; color: var(--teal, #0e7c7b); }
 
-/* ---------- Short screens (laptops with display scaling): let the page scroll ---------- */
-@media (max-height: 780px) and (min-width: 1101px) {
-  .nest { height: auto; min-height: 100vh; overflow: visible; }
-  .nest-main { align-items: start; }
-  .nest-deck { flex: none; height: 620px; }
-  .rail { max-height: none; }
-  .map-rail { align-self: start; height: 620px; }
-  .nest-bar { position: sticky; top: 0; }
+/* ---------- Laptops: the page always fits the window (no page scroll).
+   The card shrinks to fit; the filters panel scrolls on its own. ---------- */
+@media (min-width: 1101px) {
+  .nest { height: 100vh; height: 100dvh; overflow: hidden; }
+  .nest-main { align-items: stretch; }
+  .nest-main > .rail { align-self: stretch; max-height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .nest-main > .map-rail { overflow: hidden; }
+  .nest-deck { flex: 1; min-height: 0; }
+  .detail-btn { flex: none; }
+}
+@media (max-height: 820px) and (min-width: 1101px) {
+  .nest-bar { padding-top: .45rem; padding-bottom: .45rem; }
+  .nest-main { padding-top: .6rem; padding-bottom: .6rem; }
+  .nest-keys { display: none; }
+  .nest-btns { margin-top: .55rem; }
+  .nest-act { width: 48px; height: 48px; }
+  .nest-act.sm { width: 40px; height: 40px; }
+  .nest-act.save { width: 56px; height: 56px; }
+  .detail-btn { margin-top: .4rem; padding: .38rem .9rem; font-size: .84rem; }
+  .route { padding: .5rem; gap: .35rem; }
 }
 
 /* ---------- Map: From / To route box ---------- */
@@ -533,3 +545,36 @@ button.nest-btn { background: none; cursor: pointer; display: grid; place-items:
   .nest-right .nest-btn { padding: .4rem .5rem; }
   .amen { display: none; }
 }
+
+.owner-verified { display: flex; gap: .65rem; align-items: center; padding: .6rem .8rem; border-radius: 12px; background: #e3f7ec; color: #12693f; }
+.ov-tick { width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #12693f; color: #fff; font-weight: 800; }
+.owner-verified div { display: grid; }
+.owner-verified span:not(.ov-tick) { font-size: .78rem; opacity: .85; }
+[data-theme="dark"] .owner-verified { background: #12332f; color: #7be0d4; }
+
+/* ---------- Who lives here (sample housemates) ---------- */
+.hm-stack { display: flex; align-items: center; gap: .55rem; font-size: .8rem; color: var(--muted); }
+.hm-stack b { color: var(--ink); }
+.hm-faces { display: flex; }
+.hm-faces .avatar-face { margin-left: -8px; }
+.hm-faces .avatar-face:first-child { margin-left: 0; }
+.hm-list { display: grid; gap: .45rem; }
+.hm { display: flex; align-items: center; gap: .7rem; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 12px; }
+.hm > div { flex: 1; display: grid; }
+.hm b { font-size: .9rem; }
+.hm span { font-size: .78rem; color: var(--muted); }
+.hm .vb { flex: none; }
+.vb { font-size: .74rem; font-weight: 700; padding: .18rem .55rem; border-radius: 99px; background: #ecebf4; color: #6b6785; }
+.vb.ok { background: #d5efea; color: #0e7c7b; }
+.demo-tag { margin: 0; font-size: .75rem; color: var(--muted); font-style: italic; }
+@media (max-height: 760px) and (min-width: 1101px) { .nest-card .hm-stack { display: none; } }
+
+.hm-count { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.hm-count b { margin-right: .15rem; }
+.hm-g { font-size: .76rem; font-weight: 700; padding: .15rem .55rem; border-radius: 99px; }
+.hm-g.f { background: #fde4ef; color: #a3245f; }
+.hm-g.m { background: #e3ecfa; color: #2f5fb3; }
+.hm-count.big { font-size: .9rem; margin-bottom: .1rem; }
+.hm-count.big .hm-g { font-size: .82rem; }
+[data-theme="dark"] .hm-g.f { background: #4a1f33; color: #f9a8d4; }
+[data-theme="dark"] .hm-g.m { background: #1e2c55; color: #a9c2f5; }
