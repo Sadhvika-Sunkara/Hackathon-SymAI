@@ -85,11 +85,17 @@ def all_listings():
         return [_out(r) for r in c.execute("SELECT * FROM listings ORDER BY id")]
 
 
-def add_listing(title, suburb, rent, household, lat, lng):
+def add_listing(title, suburb, rent, household, lat, lng,
+                bedrooms=None, bathrooms=None, furnished=None, bills_included=None, amenities=None):
+    """Owners set the details; anything left blank gets sample values from fill_details()."""
     with conn() as c:
         cur = c.execute(
-            "INSERT INTO listings (title, suburb, rent, household, lat, lng) VALUES (?, ?, ?, ?, ?, ?)",
-            (title, suburb, rent, household, lat, lng),
+            "INSERT INTO listings (title, suburb, rent, household, lat, lng, bedrooms, bathrooms, furnished, bills_included, amenities) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (title, suburb, rent, household, lat, lng, bedrooms, bathrooms,
+             None if furnished is None else int(furnished),
+             None if bills_included is None else int(bills_included),
+             ",".join(amenities) if amenities else None),
         )
         new_id = cur.lastrowid
     fill_details()

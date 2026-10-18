@@ -41,7 +41,7 @@ export default function Login() {
   async function enter(dest, arrived) {
     await arrived;
     if (reduced()) return router.push(dest);
-    setScene("reach"); await sleep(350);
+    setScene("reach"); await sleep(1000); // knock, knock
     setScene("open"); await sleep(600);
     setScene("flash"); await sleep(650);
     router.push(dest);
@@ -65,8 +65,8 @@ export default function Login() {
     if (!r) return fail("Can't reach the backend. Please try again in a moment.", arrived);
     if (!r.ok) return fail((await r.json()).detail || "Sign-in failed", arrived);
     const data = await r.json();
-    sessionStorage.setItem("sl_token", data.token);
-    sessionStorage.setItem("sl_name", data.name);
+    localStorage.setItem("sl_token", data.token);
+    localStorage.setItem("sl_name", data.name);
     enter("/", arrived);
   }
 
@@ -78,7 +78,7 @@ export default function Login() {
     const r = await post("/owner/login", creds);
     if (!r) return fail("Can't reach the backend. Please try again in a moment.", arrived);
     if (!r.ok) return fail("Wrong username or password.", arrived);
-    sessionStorage.setItem("owner_pw", (await r.json()).token); // signed session token, not the password
+    localStorage.setItem("owner_pw", (await r.json()).token); // signed session token, not the password
     enter("/owner", arrived);
   }
 
@@ -102,11 +102,16 @@ export default function Login() {
   return (
     <div className="login">
       <aside className="login-side">
+        <video className="login-video" poster="/login-bg.jpg" autoPlay muted loop playsInline aria-hidden="true"
+          onEnded={e => { e.currentTarget.currentTime = 0; e.currentTarget.play().catch(() => {}); }}>
+          <source src="/login-bg.webm" type="video/webm" />
+          <source src="/login-bg.mp4" type="video/mp4" />
+        </video>
         <Link href="/" className="brand">Nivasya</Link>
         <div>
           <h1>Your one stop for rentals.</h1>
           <ul>
-            <li>Students: see your room, bills and requests</li>
+            <li>Renters: see your room, bills and requests</li>
             <li>Owners: manage listings, subleasers and leases</li>
             <li>Everyone: one place, one login</li>
           </ul>
@@ -119,17 +124,16 @@ export default function Login() {
         <div className="login-card">
           <h2>Log in</h2>
           <div className="role-tabs" role="tablist">
-            <button role="tab" aria-selected={role === "student"} className={role === "student" ? "on" : ""} onClick={() => pick("student")}>Student / subleaser</button>
+            <button role="tab" aria-selected={role === "student"} className={role === "student" ? "on" : ""} onClick={() => pick("student")}>Renter / subleaser</button>
             <button role="tab" aria-selected={role === "owner"} className={role === "owner" ? "on" : ""} onClick={() => pick("owner")}>Lease owner</button>
           </div>
 
           {role === "student" && (
             <>
-              <p className="hint">Sign in with Google to see your room, bills and complaints.</p>
+              <p className="hint">{google ? "Sign in with Google to see your room, bills and complaints." : "Sign in with your name and email to see your room, bills and complaints."}</p>
               {google === true && <div ref={btn} className="gbtn" />}
               {google === false && (
                 <form onSubmit={e => { e.preventDefault(); studentLogin({ demo_name: demo.name, demo_email: demo.email }); }}>
-                  <p className="demo-note">Demo sign-in. Use the email your owner added you with.</p>
                   <label className="field"><span>Name</span><input value={demo.name} onChange={e => setDemo({ ...demo, name: e.target.value })} required /></label>
                   <label className="field"><span>Email</span><input type="email" value={demo.email} onChange={e => setDemo({ ...demo, email: e.target.value })} required /></label>
                   <button className="primary" disabled={busy}>{busy ? "Signing in..." : "Continue"}</button>

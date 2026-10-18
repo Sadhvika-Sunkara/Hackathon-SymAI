@@ -226,3 +226,21 @@ a.brand { display: block; text-decoration: none; }
 
 .or { display: flex; align-items: center; gap: .8rem; color: var(--muted); font-size: .85rem; font-weight: 600; margin: .3rem 0; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+/* ---------- Owner: richer Add a listing form ---------- */
+.dash-home { margin-left: auto; color: #fff; text-decoration: none; font-weight: 600; font-size: .9rem; padding: .4rem .9rem; border: 1px solid #4a4380; border-radius: 99px; }
+.dash-home:hover { background: #26205a; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.check { display: flex; align-items: center; gap: .5rem; font-size: .88rem; font-weight: 600; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--jac); }
+.amen-pick { display: flex; flex-wrap: wrap; gap: .4rem; }
+.amen-pick label { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; font-weight: 600; padding: .3rem .65rem; border-radius: 99px; border: 1px solid var(--line); background: #faf9fe; color: var(--muted); cursor: pointer; }
+.amen-pick label.on { background: var(--jac); border-color: var(--jac); color: #fff; }
+.amen-pick input { position: absolute; opacity: 0; width: 0; height: 0; }
+.amen-pick label:focus-within { outline: 2px solid var(--jac); outline-offset: 2px; }
+
+/* ---------- Login: looping home video behind the scene ---------- */
+.login-side { position: relative; overflow: hidden; isolation: isolate; }
+.login-side > * { position: relative; z-index: 1; }
+.login-side > .login-video { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; filter: blur(5px) brightness(.45) saturate(1.1); transform: scale(1.06); }
+.login-side::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(22, 18, 58, .55), rgba(22, 18, 58, .35) 45%, rgba(22, 18, 58, .7)); }
+@media (prefers-reduced-motion: reduce) { .login-side > .login-video { display: none; } }

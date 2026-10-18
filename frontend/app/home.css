@@ -445,3 +445,21 @@ button.nest-btn { background: none; cursor: pointer; display: grid; place-items:
 .modal .modal-x { z-index: 2; background: rgba(255, 255, 255, .9); border-radius: 50%; width: 32px; height: 32px; }
 .nest-list .thumb { width: 54px; height: 54px; flex: none; border-radius: 10px; object-fit: cover; background: #ece7fa; }
 .nest-cover .nest-sub, .nest-cover .nest-rent { text-shadow: 0 2px 14px rgba(0, 0, 0, .45); }
+
+/* ---------- Distance on the map ---------- */
+.leaflet-tooltip.map-dist { background: #d9569a; color: #fff; border: 0; border-radius: 99px; font-weight: 800; font-size: .78rem; padding: .15rem .55rem; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+.leaflet-tooltip.map-dist::before { display: none; }
+.leaflet-tooltip.map-place { background: #0e9f9a; color: #fff; border: 0; border-radius: 8px; font-weight: 700; font-size: .75rem; }
+.leaflet-tooltip.map-place::before { border-top-color: #0e9f9a !important; }
+.map-pop a { font-size: .8rem; font-weight: 700; color: #0e7c7b; text-align: center; }
+.dir-link { display: inline-block; margin-top: .25rem; font-size: .82rem; font-weight: 700; color: var(--teal, #0e7c7b); }
+
+/* ---------- Short screens (laptops with display scaling): let the page scroll ---------- */
+@media (max-height: 780px) and (min-width: 1101px) {
+  .nest { height: auto; min-height: 100vh; overflow: visible; }
+  .nest-main { align-items: start; }
+  .nest-deck { flex: none; height: 620px; }
+  .rail { max-height: none; }
+  .map-rail { align-self: start; height: 620px; }
+  .nest-bar { position: sticky; top: 0; }
+}

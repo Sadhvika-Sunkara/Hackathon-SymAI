@@ -22,7 +22,7 @@ export default function LoginScene({ scene = "idle" }) {
   return (
     <>
       <div className={`ls-scene ls-${state}`} aria-hidden="true">
-        <svg viewBox="0 0 400 220">
+        <svg viewBox="0 -44 430 264">
           <defs>
             <linearGradient id="ls-glow" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#fff7e0" />
@@ -30,22 +30,25 @@ export default function LoginScene({ scene = "idle" }) {
             </linearGradient>
           </defs>
 
-          <path className="ls-floor" d="M12 200H388" />
+          <path className="ls-floor" d="M12 200H418" />
 
-          {/* Door: hinge on the right edge (x = 362), knob on the left */}
+          {/* Door, further back and a real door's height (about 1.2x the boy).
+              Hinge on the right edge (x = 412), knob on the left at hand height. */}
           <g className="ls-doorset" ref={door}>
-            <rect className="ls-frame" x="306" y="58" width="62" height="142" rx="4" />
-            <rect className="ls-light" x="314" y="64" width="48" height="136" fill="url(#ls-glow)" />
+            <rect className="ls-frame" x="334" y="-14" width="86" height="214" rx="5" />
+            <rect className="ls-light" x="342" y="-6" width="70" height="206" fill="url(#ls-glow)" />
             <g className="ls-door">
-              <rect className="ls-panel ls-o" x="314" y="64" width="48" height="136" rx="2" />
-              <rect className="ls-inset" x="321" y="74" width="34" height="46" rx="3" />
-              <rect className="ls-inset" x="321" y="130" width="34" height="58" rx="3" />
-              <circle className="ls-knob" cx="322" cy="134" r="4" />
+              <rect className="ls-panel ls-o" x="342" y="-6" width="70" height="206" rx="3" />
+              <rect className="ls-inset" x="352" y="8" width="50" height="76" rx="4" />
+              <rect className="ls-inset" x="352" y="98" width="50" height="90" rx="4" />
+              <circle className="ls-knob" cx="352" cy="120" r="5" />
             </g>
+            <text className="ls-knocktext" x="377" y="-24" textAnchor="middle">knock knock!</text>
           </g>
 
-          {/* Character, standing at x = 70 */}
+          {/* Character, standing at x = 70, drawn 25% bigger (scaled from his feet) */}
           <g className="ls-man">
+          <g transform="translate(70 200) scale(1.25) translate(-70 -200)">
             <ellipse className="ls-shadow" cx="70" cy="201" rx="24" ry="4" />
 
             <g className="ls-leg a">
@@ -84,12 +87,13 @@ export default function LoginScene({ scene = "idle" }) {
               <path className="ls-mouth ls-smile" d="M76 98q5 5 10 0" />
               <path className="ls-mouth ls-frown" d="M76 102q5-5 10 0" />
 
-              {/* Front arm: swings while walking, reaches for the knob */}
+              {/* Front arm: swings while walking, knocks, then reaches for the knob */}
               <g className="ls-arm">
                 <rect className="ls-sleeve ls-o" x="78" y="114" width="10" height="32" rx="5" />
                 <circle className="ls-skin ls-o" cx="83" cy="148" r="4.5" />
               </g>
             </g>
+          </g>
           </g>
         </svg>
       </div>

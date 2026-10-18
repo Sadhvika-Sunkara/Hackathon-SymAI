@@ -241,8 +241,8 @@ export default function Home() {
   const [transport, setTransport] = useState(false);
   const [policeNear, setPoliceNear] = useState(false);
   const [maxRent, setMaxRent] = useState(400);
-  const [showFilters, setShowFilters] = useState(true);
-  const [showMap, setShowMap] = useState(true);
+  const [showFilters, setShowFilters] = useState(false); // closed on load, opens when tapped
+  const [showMap, setShowMap] = useState(false);
   const [items, setItems] = useState([]);
   const [passed, setPassed] = useState([]);
   const [saved, setSaved] = useState([]);
@@ -252,11 +252,11 @@ export default function Home() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("sl_token")) setUser({ name: sessionStorage.getItem("sl_name") || "Student", role: "student" });
-    else if (sessionStorage.getItem("owner_pw")) setUser({ name: "Owner", role: "owner" });
+    if (localStorage.getItem("sl_token")) setUser({ name: localStorage.getItem("sl_name") || "Student", role: "student" });
+    else if (localStorage.getItem("owner_pw")) setUser({ name: "Owner", role: "owner" });
   }, []);
   const signOut = () => {
-    ["sl_token", "sl_name", "owner_pw"].forEach(k => sessionStorage.removeItem(k));
+    ["sl_token", "sl_name", "owner_pw"].forEach(k => localStorage.removeItem(k));
     setUser(null);
     setMenuOpen(false);
   };
@@ -531,7 +531,7 @@ export default function Home() {
         </div>
       )}
 
-      {openHome && <Details key={openHome.id} l={openHome} placeName={campusName} onClose={() => setOpenHome(null)} />}
+      {openHome && <Details key={openHome.id} l={openHome} placeName={campusName} place={place} onClose={() => setOpenHome(null)} />}
     </div>
   );
 }

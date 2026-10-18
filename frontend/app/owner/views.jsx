@@ -9,6 +9,7 @@ const TYPES = [
   ["male_preferred", "Male preferred"],
   ["any", "Any gender"],
 ];
+const AMENITY_OPTIONS = ["Wifi", "Laundry", "Air con", "Parking", "Dishwasher", "Balcony", "Gym", "Study desk", "Pets allowed"];
 const today = () => new Date().toISOString().slice(0, 10);
 const nameOf = (subs, id) => subs.find(s => s.id === id)?.name ?? "Unassigned";
 
@@ -44,7 +45,7 @@ function SubSelect({ subs, value, onChange, required }) {
 export function ListingsView({ pw, onExpired }) {
   const [suburbs, setSuburbs] = useState([]);
   const [items, setItems] = useState([]);
-  const empty = { title: "", suburb: "", rent: "", household: "any" };
+  const empty = { title: "", suburb: "", rent: "", household: "any", bedrooms: 1, bathrooms: 1, furnished: true, bills_included: false, amenities: [] };
   const [form, setForm] = useState(empty);
   const [msg, setMsg] = useState("");
 
@@ -59,12 +60,12 @@ export function ListingsView({ pw, onExpired }) {
     const r = await fetch(`${API}/listings`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-owner-password": pw },
-      body: JSON.stringify({ ...form, rent: Number(form.rent) }),
+      body: JSON.stringify({ ...form, rent: Number(form.rent), bedrooms: Number(form.bedrooms), bathrooms: Number(form.bathrooms) }),
     });
     if (r.status === 401) return onExpired();
     if (!r.ok) return setMsg("Couldn't save. Check the title (3+ characters) and rent.");
     setForm(empty);
-    setMsg("Listing added. Students can see it now.");
+    setMsg("Listing added. Renters can see it now.");
     load();
   }
 
@@ -96,6 +97,32 @@ export function ListingsView({ pw, onExpired }) {
             {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </Field>
+        <div className="two-col">
+          <Field label="Bedrooms">
+            <select value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: e.target.value })}>
+              {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}{n === 6 ? "+" : ""}</option>)}
+            </select>
+          </Field>
+          <Field label="Bathrooms">
+            <select value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: e.target.value })}>
+              {[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </Field>
+        </div>
+        <label className="check"><input type="checkbox" checked={form.furnished} onChange={e => setForm({ ...form, furnished: e.target.checked })} /> Furnished</label>
+        <label className="check"><input type="checkbox" checked={form.bills_included} onChange={e => setForm({ ...form, bills_included: e.target.checked })} /> Bills included</label>
+        <div className="field">
+          <span>Amenities</span>
+          <div className="amen-pick">
+            {AMENITY_OPTIONS.map(a => (
+              <label key={a} className={form.amenities.includes(a) ? "on" : ""}>
+                <input type="checkbox" checked={form.amenities.includes(a)}
+                  onChange={() => setForm({ ...form, amenities: form.amenities.includes(a) ? form.amenities.filter(x => x !== a) : [...form.amenities, a] })} />
+                {a}
+              </label>
+            ))}
+          </div>
+        </div>
         {msg && <p className="note">{msg}</p>}
         <button className="primary">Add listing</button>
       </form>
@@ -107,7 +134,7 @@ export function ListingsView({ pw, onExpired }) {
             <li key={l.id}>
               <div>
                 <p className="v">{l.title}</p>
-                <p className="k">{l.suburb}, ${l.rent}/week, {TYPES.find(t => t[0] === l.household)?.[1]}</p>
+                <p className="k">{l.suburb}, ${l.rent}/week, {TYPES.find(t => t[0] === l.household)?.[1]}{l.bedrooms ? `, ${l.bedrooms} bed, ${l.bathrooms || 1} bath, ${l.furnished ? "furnished" : "unfurnished"}${l.bills_included ? ", bills included" : ""}` : ""}</p>
               </div>
               <button className="danger" onClick={() => remove(l.id, l.title)}>Delete</button>
             </li>

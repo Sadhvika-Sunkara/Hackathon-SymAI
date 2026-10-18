@@ -11,13 +11,13 @@ export default function Subleaser() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    const t = sessionStorage.getItem("sl_token");
+    const t = localStorage.getItem("sl_token");
     if (t) setToken(t);
     else window.location.replace("/login");
   }, []);
 
   const logout = () => {
-    sessionStorage.removeItem("sl_token");
+    localStorage.removeItem("sl_token");
     window.location.replace("/login");
   };
 

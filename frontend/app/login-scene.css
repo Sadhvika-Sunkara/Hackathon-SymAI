@@ -9,7 +9,7 @@
 /* Door */
 .ls-frame { fill: #0e0b22; stroke: #4a4380; stroke-width: 3; }
 .ls-light { opacity: 0; transition: opacity .3s ease; }
-.ls-door { transform-box: view-box; transform-origin: 362px 100px; transition: transform .6s cubic-bezier(.6, 0, .3, 1); }
+.ls-door { transform-box: view-box; transform-origin: 412px 100px; transition: transform .6s cubic-bezier(.6, 0, .3, 1); }
 .ls-panel { fill: #6d4fd0; }
 .ls-inset { fill: #5a3fb8; }
 .ls-knob { fill: #ffd166; stroke: #0b0824; stroke-width: 1.5; }
@@ -45,7 +45,7 @@
 .ls-arm { transition: transform .3s ease-out; }
 
 /* Press Continue: he walks to the door, then waits */
-.ls-walk .ls-man, .ls-wait .ls-man, .ls-reach .ls-man { transform: translateX(205px); }
+.ls-walk .ls-man, .ls-wait .ls-man, .ls-reach .ls-man { transform: translateX(222px); }
 .ls-walk .ls-body { animation: ls-bob .25s ease-in-out infinite alternate; }
 @keyframes ls-bob { to { transform: translateY(-3px); } }
 .ls-walk .ls-leg.a, .ls-open .ls-leg.a, .ls-flash .ls-leg.a, .ls-error .ls-leg.a { animation: ls-step .5s ease-in-out infinite alternate; }
@@ -54,11 +54,14 @@
 @keyframes ls-step { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
 
 /* Success: reach for the knob, door opens, he steps through */
-.ls-reach .ls-arm { transform: rotate(-85deg); }
+.ls-reach .ls-arm { transform: rotate(-85deg); animation: ls-knock .32s ease-in-out 3; }
+@keyframes ls-knock { 0%, 100% { transform: rotate(-85deg); } 50% { transform: rotate(-62deg); } }
+.ls-knocktext { font: 700 13px system-ui, sans-serif; fill: #ffd166; opacity: 0; transition: opacity .2s; }
+.ls-reach .ls-knocktext { opacity: 1; }
 .ls-open .ls-door, .ls-flash .ls-door { transform: scaleX(.14); }
 .ls-open .ls-light, .ls-flash .ls-light { opacity: 1; }
 .ls-open .ls-arm, .ls-flash .ls-arm { transform: rotate(-20deg); }
-.ls-open .ls-man, .ls-flash .ls-man { transform: translateX(262px); opacity: 0; transition: transform .6s linear, opacity .35s ease .25s; }
+.ls-open .ls-man, .ls-flash .ls-man { transform: translateX(307px); opacity: 0; transition: transform .6s linear, opacity .35s ease .25s; }
 
 /* Failure: frown, turn around, walk back */
 .ls-error .ls-frown { display: block; }
@@ -76,7 +79,7 @@
 .ls-flash.on { clip-path: circle(150vmax at var(--fx, 50%) var(--fy, 50%)); }
 
 @media (max-width: 800px) { .ls-scene { max-width: 300px; } }
-@media (max-height: 700px) and (min-width: 801px) { .ls-scene { max-width: 260px; } }
+@media (max-height: 700px) and (min-width: 801px) { .ls-scene { max-width: 340px; } }
 @media (max-height: 420px) { .ls-scene { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   .ls-doorset, .ls-body, .ls-leg, .ls-arm { animation: none !important; }

@@ -15,13 +15,13 @@ export default function Owner() {
   const [menu, setMenu] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("owner_pw");
+    const saved = localStorage.getItem("owner_pw");
     if (saved) setPw(saved);
     else window.location.replace("/login");
   }, []);
 
   const logout = () => {
-    sessionStorage.removeItem("owner_pw");
+    localStorage.removeItem("owner_pw");
     window.location.replace("/login");
   };
 
@@ -35,6 +35,7 @@ export default function Owner() {
       <header className="dash-bar">
         <Link href="/" className="brand">Nivasya</Link>
         <span>Owner dashboard</span>
+        <Link href="/" className="dash-home">Browse homes</Link>
       </header>
 
       <nav className="tabs">

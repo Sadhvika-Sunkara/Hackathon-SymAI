@@ -37,7 +37,7 @@ export function Amenities({ l, max }) {
 }
 
 /* Full details of one home, with a form to message the lease owner. */
-export function Details({ l, placeName, onClose }) {
+export function Details({ l, placeName, place, onClose }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -83,7 +83,15 @@ export function Details({ l, placeName, onClose }) {
           <div><p className="k">Who lives there</p><p className="v">{HOUSE[l.household] || l.household}</p></div>
           <div><p className="k">Nearest station</p><p className="v">{l.station}, {l.walk_min} min walk</p></div>
           {l.campus_km !== undefined && (
-            <div><p className="k">Distance</p><p className="v">{l.campus_km} km from {placeName || "your location"}</p></div>
+            <div>
+              <p className="k">Distance</p>
+              <p className="v">{l.campus_km} km from {placeName || "your location"}</p>
+              {place && (
+                <a className="dir-link" href={`https://www.google.com/maps/dir/?api=1&origin=${place.lat},${place.lng}&destination=${l.lat},${l.lng}&travelmode=transit`} target="_blank" rel="noopener noreferrer">
+                  Get directions ↗
+                </a>
+              )}
+            </div>
           )}
         </div>
 

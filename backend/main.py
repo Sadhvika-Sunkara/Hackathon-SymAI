@@ -173,6 +173,11 @@ class NewListing(BaseModel):
     suburb: str
     rent: int = Field(gt=0, lt=5000)
     household: str
+    bedrooms: Optional[int] = Field(default=None, ge=1, le=6)
+    bathrooms: Optional[int] = Field(default=None, ge=1, le=6)
+    furnished: Optional[bool] = None
+    bills_included: Optional[bool] = None
+    amenities: Optional[list[str]] = None
 
 
 @app.post("/listings", status_code=201)
@@ -183,7 +188,9 @@ def add_listing(body: NewListing, x_owner_password: str = Header(default="")):
     if body.suburb not in ALL_SUBURBS:
         raise HTTPException(422, "Unknown suburb")
     lat, lng = ALL_SUBURBS[body.suburb]
-    return db.add_listing(body.title, body.suburb, body.rent, body.household, lat, lng)
+    amenities = [a.strip()[:30] for a in (body.amenities or []) if a.strip()][:12]
+    return db.add_listing(body.title, body.suburb, body.rent, body.household, lat, lng,
+                          body.bedrooms, body.bathrooms, body.furnished, body.bills_included, amenities)
 
 
 @app.delete("/listings/{listing_id}")
