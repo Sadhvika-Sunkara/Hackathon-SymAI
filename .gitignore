@@ -1,0 +1,10 @@
+.venv/
+node_modules/
+.next/
+__pycache__/
+*.db
+uploads/
+.env
+.env.local.env.*.local
+.vercel
+*.sqlite3
