@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ListingsView, SubleasersView, BillsView, ComplaintsView, ProfileView } from "./views";
+import { ListingsView, SubleasersView, BillsView, ComplaintsView, MessagesView, ProfileView } from "./views";
 
 const SUB_ITEMS = [
   ["onboarding", "Onboarding / Offboarding"],
@@ -33,7 +33,7 @@ export default function Owner() {
   return (
     <div className="dash">
       <header className="dash-bar">
-        <Link href="/" className="brand">CampusNest</Link>
+        <Link href="/" className="brand">Nivasya</Link>
         <span>Owner dashboard</span>
       </header>
 
@@ -52,6 +52,7 @@ export default function Owner() {
 
           <button className={view === "bills" ? "tab on" : "tab"} onClick={() => go("bills")}>Bills and management</button>
           <button className={view === "complaints" ? "tab on" : "tab"} onClick={() => go("complaints")}>Complaints</button>
+          <button className={view === "messages" ? "tab on" : "tab"} onClick={() => go("messages")}>Messages</button>
           <button className={view === "profile" ? "tab on" : "tab"} onClick={() => go("profile")}>User / Profile</button>
         </div>
       </nav>
@@ -61,6 +62,7 @@ export default function Owner() {
         {inSub && <SubleasersView key={view} pw={pw} mode={view.slice(4)} />}
         {view === "bills" && <BillsView pw={pw} />}
         {view === "complaints" && <ComplaintsView pw={pw} />}
+        {view === "messages" && <MessagesView pw={pw} />}
         {view === "profile" && <ProfileView onLogout={logout} />}
       </div>
     </div>

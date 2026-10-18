@@ -3,7 +3,7 @@ import "./globals.css";
 
 const font = Bricolage_Grotesque({ subsets: ["latin"] });
 
-export const metadata = { title: "CampusNest", description: "Find a student home near your campus" };
+export const metadata = { title: "Nivasya", description: "Find a home anywhere in Australia" };
 
 export default function RootLayout({ children }) {
   return (

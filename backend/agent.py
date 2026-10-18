@@ -32,7 +32,7 @@ TOOLS = [
 ]
 
 SYSTEM = (
-    "You are CampusNest's housing assistant for university students in Sydney. "
+    "You are Nivasya's housing assistant for renters across Australia. "
     "Only state facts (rent, distance, features) that come from tool results. "
     "Never invent listings. Be concise and explain trade-offs."
 )

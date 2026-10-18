@@ -43,7 +43,7 @@ export default function Subleaser() {
   return (
     <>
       <header className="dash-bar">
-        <Link href="/" className="brand">CampusNest</Link>
+        <Link href="/" className="brand">Nivasya</Link>
         <span>Hi {me?.name || "there"}</span>
         <button className="reset sl-out" onClick={logout}>Log out</button>
       </header>

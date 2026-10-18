@@ -1,6 +1,6 @@
-# CampusNest – App Structure
+# Nivasya – App Structure
 
-How CampusNest is organised: three roles, one login, and an IAM lifecycle that connects them.
+How Nivasya is organised: three roles, one login, and an IAM lifecycle that connects them.
 
 > **Story:** Applicant → *onboarding (joiner)* → Subleaser → *offboarding (leaver)* → all access revoked.
 
@@ -113,7 +113,7 @@ LEASE OWNER – Run the house
 
 ## 4. IAM mapping
 
-| IAM concept | In CampusNest |
+| IAM concept | In Nivasya |
 |---|---|
 | Identity | Subleaser account |
 | Manager | Lease owner |

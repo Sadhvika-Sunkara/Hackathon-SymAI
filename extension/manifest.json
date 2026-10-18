@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "CampusNest",
+  "name": "Nivasya",
   "version": "0.1.0",
   "description": "Find student rooms near your Sydney campus",
-  "action": { "default_popup": "popup.html", "default_title": "CampusNest" },
+  "action": { "default_popup": "popup.html", "default_title": "Nivasya" },
   "host_permissions": ["http://localhost:8000/*"]
 }

@@ -1,4 +1,4 @@
-# Deploying CampusNest
+# Deploying Nivasya
 
 Backend (FastAPI + SQLite) on **Railway**, frontend (Next.js) on **Vercel**. Both free to start.
 
@@ -60,3 +60,12 @@ Private window, on a phone:
 - `db.py`: database path comes from `DB_PATH`
 - `login/page.jsx`: stores the owner token instead of the password
 - Added `Procfile`, `railway.json`, `.python-version`, `.env.example` files
+
+## Update (Sunday): Australia-wide search
+
+- `GET /locations`: cities, universities and suburbs across Australia
+- `GET /listings?near=<location id>`: homes within 50 km, sorted by distance (old `campus=` still works)
+- New filters: `bedrooms=1,2,3` (multi), `bathrooms=1,2` (3 = 3+), `furnished=true|false`, `bills=true|false`
+- `POST /listings/{id}/messages`: anyone can message the lease owner; owners read them in the dashboard's Messages tab
+- Database: new columns (bedrooms, bathrooms, furnished, bills_included, amenities) and a messages table are added automatically on startup; existing data is kept
+- Frontend: Leaflet map (OpenStreetMap tiles) — no API key needed

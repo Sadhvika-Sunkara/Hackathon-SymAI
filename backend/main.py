@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import db
-from data import CAMPUSES, STATIONS, SUBURBS
+from data import ALL_SUBURBS, CAMPUSES, CITIES, STATIONS, SUBURBS, UNIVERSITIES
 
 import pathlib
 
@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv(pathlib.Path(__file__).parent / ".env")
 
 
-app = FastAPI(title="CampusNest API")
+app = FastAPI(title="Nivasya API")
 app.add_middleware(
     CORSMiddleware,
     # Comma-separated list, e.g. "https://campusnest.vercel.app,http://localhost:3000"
@@ -39,6 +39,7 @@ OWNER_USER = "admin"
 OWNER_PASSWORD = os.getenv("OWNER_PASSWORD", "admin")  # prototype only
 HOUSEHOLDS = {"female_only", "female_preferred", "male_preferred", "any"}
 WALK_M_PER_MIN = 80
+NEAR_KM = 50  # radius used when someone picks a location
 DETOUR = 1.3  # straight-line distance -> realistic walking distance
 
 
@@ -82,7 +83,27 @@ def campuses():
 
 @app.get("/suburbs")
 def suburbs():
-    return sorted(SUBURBS.keys())
+    return sorted(ALL_SUBURBS.keys())
+
+
+def all_locations():
+    out = {}
+    for group, src in (("City", CITIES), ("University", UNIVERSITIES)):
+        for k, (name, lat, lng) in src.items():
+            out[k] = {"id": k, "name": name, "group": group, "lat": lat, "lng": lng}
+    for name, (lat, lng) in ALL_SUBURBS.items():
+        k = "sub-" + name.lower().replace(" ", "-")
+        out[k] = {"id": k, "name": name, "group": "Suburb", "lat": lat, "lng": lng}
+    return out
+
+
+LOCATIONS = all_locations()
+
+
+@app.get("/locations")
+def locations():
+    """Anywhere a renter might measure distance from: cities, universities and suburbs across Australia."""
+    return list(LOCATIONS.values())
 
 
 @app.get("/listings")
@@ -91,10 +112,16 @@ def listings(
     household: Optional[str] = None,
     walk_max: Optional[int] = None,
     max_rent: Optional[int] = None,
+    bedrooms: Optional[str] = None,   # e.g. "1,2,3" (multi-select)
+    bathrooms: Optional[str] = None,  # e.g. "1,2" (3 means 3 or more)
+    furnished: Optional[bool] = None,
+    bills: Optional[bool] = None,
+    near: Optional[str] = None,
 ):
-    c = CAMPUSES.get(campus) if campus else None
-    if campus and not c:
-        raise HTTPException(404, "Unknown campus")
+    where = near or campus
+    c = LOCATIONS.get(where) if where else None
+    if where and not c:
+        raise HTTPException(404, "Unknown location")
 
     items = [enrich(l, c) for l in db.all_listings()]
 
@@ -105,7 +132,25 @@ def listings(
         items = [i for i in items if i["walk_min"] <= walk_max]
     if max_rent is not None:
         items = [i for i in items if i["rent"] <= max_rent]
+    def nums(v):
+        try:
+            return {int(x) for x in v.split(",") if x.strip()}
+        except ValueError:
+            raise HTTPException(422, "Use numbers like 1,2,3")
+
+    if bedrooms:
+        want = nums(bedrooms)
+        items = [i for i in items if i.get("bedrooms") in want]
+    if bathrooms:
+        want = nums(bathrooms)
+        items = [i for i in items if min(i.get("bathrooms") or 1, 3) in want]
+    if furnished is not None:
+        items = [i for i in items if i.get("furnished") == furnished]
+    if bills is not None:
+        items = [i for i in items if i.get("bills_included") == bills]
     if c:
+        # "Near" means nearby: only homes within a commutable distance of the chosen place
+        items = [i for i in items if i["campus_km"] <= NEAR_KM]
         items.sort(key=lambda i: i["campus_km"])
 
     return items
@@ -135,9 +180,9 @@ def add_listing(body: NewListing, x_owner_password: str = Header(default="")):
     require_owner(x_owner_password)
     if body.household not in HOUSEHOLDS:
         raise HTTPException(422, "Invalid household type")
-    if body.suburb not in SUBURBS:
+    if body.suburb not in ALL_SUBURBS:
         raise HTTPException(422, "Unknown suburb")
-    lat, lng = SUBURBS[body.suburb]
+    lat, lng = ALL_SUBURBS[body.suburb]
     return db.add_listing(body.title, body.suburb, body.rent, body.household, lat, lng)
 
 
@@ -149,6 +194,22 @@ def delete_listing(listing_id: int, x_owner_password: str = Header(default="")):
     return {"deleted": listing_id}
 
 
+
+
+class Message(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    email: str = Field(min_length=3, max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    body: str = Field(min_length=2, max_length=1000)
+
+
+@app.post("/listings/{listing_id}/messages", status_code=201)
+def message_owner(listing_id: int, body: Message):
+    """Anyone can message the lease owner about a home. The owner reads replies in the dashboard."""
+    if not any(l["id"] == listing_id for l in db.all_listings()):
+        raise HTTPException(404, "Listing not found")
+    saved = db.insert("messages", {"listing_id": listing_id, "name": body.name.strip(),
+                                   "email": body.email.strip(), "body": body.body.strip()})
+    return {"ok": True, "id": saved["id"]}
 
 
 def check_table(table: str):

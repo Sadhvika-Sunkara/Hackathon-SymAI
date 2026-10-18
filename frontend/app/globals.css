@@ -223,3 +223,6 @@ a.brand { display: block; text-decoration: none; }
 .role-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #ece9f7; border-radius: 12px; }
 .role-tabs button { font: inherit; font-weight: 600; font-size: .9rem; padding: .55rem; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; }
 .role-tabs button.on { background: #fff; color: var(--jac-dark); box-shadow: 0 2px 8px rgba(28, 23, 56, .12); }
+
+.or { display: flex; align-items: center; gap: .8rem; color: var(--muted); font-size: .85rem; font-weight: 600; margin: .3rem 0; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }

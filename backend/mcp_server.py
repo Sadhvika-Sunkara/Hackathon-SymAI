@@ -16,7 +16,7 @@
 # def call(method: str, path: str, **kwargs):
 #     r = httpx.request(method, f"{API}{path}", headers={"x-owner-password": OWNER_PASSWORD}, timeout=15, **kwargs)
 #     if r.status_code >= 400:
-#         raise RuntimeError(f"CampusNest API {r.status_code}: {r.text}")
+#         raise RuntimeError(f"Nivasya API {r.status_code}: {r.text}")
 #     return r.json()
 
 

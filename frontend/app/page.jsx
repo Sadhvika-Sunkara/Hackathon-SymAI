@@ -2,7 +2,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "./home.css";
-import { GeoPicker } from "./geo";
+import dynamic from "next/dynamic";
+import { Details, Specs, Amenities } from "./details";
+
+const RoomMap = dynamic(() => import("./map"), { ssr: false, loading: () => <div className="room-map loading">Loading map...</div> });
 
 const API = process.env.NEXT_PUBLIC_API;
 
@@ -10,7 +13,7 @@ const HOUSEHOLD = {
   female_only: { label: "Female only", cls: "f1", icon: "shield", tip: "Only female tenants live here" },
   female_preferred: { label: "Female preferred", cls: "f2", icon: "shield-line", tip: "Female tenants preferred" },
   male_preferred: { label: "Male preferred", cls: "m", icon: "person", tip: "Male tenants preferred" },
-  any: { label: "Any gender", cls: "a", icon: "people", tip: "Open to all students" },
+  any: { label: "Any gender", cls: "a", icon: "people", tip: "Open to everyone" },
 };
 
 const COVERS = [
@@ -32,6 +35,10 @@ const P = {
   shield: <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" />,
   "shield-line": <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" />,
   person: <g><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></g>,
+  list: <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />,
+  map: <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" />,
+  filter: <path d="M4 5h16l-6 8v5l-4 2v-7z" />,
+  chat: <path d="M4 5h16v11H9l-5 4z" />,
   people: <g><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20c0-3.5 3-5 6-5s6 1.5 6 5M15 15.2c3 0 6 1.3 6 4.8" /></g>,
 };
 const filled = ["heart", "star", "shield"];
@@ -55,7 +62,7 @@ const parts = l => ({
 
 const reasons = (l, campusName) => [
   l.walk_min <= 10 && `${l.walk_min} min to ${l.station}`,
-  l.campus_km !== undefined && l.campus_km <= 5 && `${l.campus_km} km to ${(campusName || "campus").split(" ")[0]}`,
+  l.campus_km !== undefined && l.campus_km <= 5 && `${l.campus_km} km to ${(campusName || "you").split(" ")[0]}`,
   l.household.startsWith("female") && "Female-friendly",
   l.rent <= 260 && "Great value",
 ].filter(Boolean);
@@ -168,6 +175,8 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
 
       <div className="nest-body">
         <h2>{l.title}</h2>
+        <Specs l={l} />
+        <Amenities l={l} max={4} />
         {why.length > 0 && <div className="why">{why.map(w => <span key={w}>{w}</span>)}</div>}
 
         <div className="blocks">
@@ -177,10 +186,10 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
             <p className="s">to {l.station}</p>
           </div>
           <div className="blk">
-            <p className="q">Distance to campus</p>
+            <p className="q">Distance</p>
             {l.campus_km !== undefined
-              ? <><p className="a">{l.campus_km} km</p><p className="s">about {commute} min door to door</p></>
-              : <p className="s">Pick your campus to see this.</p>}
+              ? <><p className="a">{l.campus_km} km</p><p className="s">from {campusName || "your location"}</p></>
+              : <p className="s">Pick your location to see this.</p>}
           </div>
         </div>
 
@@ -196,11 +205,11 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
 
         <div className="bars">
           <p className="q">Why it scores {l.score}</p>
-          {[["Transport", b.transport], ["Campus", b.campus], ["Value", b.value]].map(([name, v]) => (
+          {[["Transport", b.transport], ["Distance", b.campus], ["Value", b.value]].map(([name, v]) => (
             <div className="bar" key={name}>
               <span>{name}</span>
               <i><b style={{ width: `${v ?? 0}%` }} /></i>
-              <em>{v === null ? "Pick campus" : v}</em>
+              <em>{v === null ? "Pick location" : v}</em>
             </div>
           ))}
         </div>
@@ -215,8 +224,16 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
 }
 
 export default function Home() {
-  const [campuses, setCampuses] = useState([]);
-  const [campus, setCampus] = useState("");
+  const [campuses, setCampuses] = useState([]); // all locations: cities, universities, suburbs
+  const [campus, setCampus] = useState("");     // chosen location id
+  const [beds, setBeds] = useState([]);         // multi-select 1-6
+  const [baths, setBaths] = useState([]);       // multi-select 1, 2, 3 (3+)
+  const [furn, setFurn] = useState("any");      // any | yes | no
+  const [bills, setBills] = useState("any");    // any | yes | no
+  const [showList, setShowList] = useState(false);
+  const [user, setUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [openHome, setOpenHome] = useState(null);
   const [women, setWomen] = useState("all"); // all | friendly | only
   const [transport, setTransport] = useState(false);
   const [policeNear, setPoliceNear] = useState(false);
@@ -232,8 +249,18 @@ export default function Home() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
+    if (sessionStorage.getItem("sl_token")) setUser({ name: sessionStorage.getItem("sl_name") || "Student", role: "student" });
+    else if (sessionStorage.getItem("owner_pw")) setUser({ name: "Owner", role: "owner" });
+  }, []);
+  const signOut = () => {
+    ["sl_token", "sl_name", "owner_pw"].forEach(k => sessionStorage.removeItem(k));
+    setUser(null);
+    setMenuOpen(false);
+  };
+
+  useEffect(() => {
     try { setSaved(JSON.parse(localStorage.getItem("nest_saved") || "[]")); } catch {}
-    fetch(`${API}/campuses`).then(r => r.json()).then(setCampuses)
+    fetch(`${API}/locations`).then(r => r.json()).then(setCampuses)
       .catch(() => setError("Can't reach the backend. Start it with: uvicorn main:app --reload --port 8000"));
   }, []);
   useEffect(() => { try { localStorage.setItem("nest_saved", JSON.stringify(saved)); } catch {} }, [saved]);
@@ -254,21 +281,28 @@ export default function Home() {
 
   useEffect(() => {
     const q = new URLSearchParams();
-    if (campus) q.set("campus", campus);
+    if (campus) q.set("near", campus);
+    if (beds.length) q.set("bedrooms", beds.join(","));
+    if (baths.length) q.set("bathrooms", baths.join(","));
+    if (furn !== "any") q.set("furnished", furn === "yes" ? "true" : "false");
+    if (bills !== "any") q.set("bills", bills === "yes" ? "true" : "false");
     if (women === "only") q.set("household", "female_only");
     else if (women === "friendly") q.set("household", "female_only,female_preferred");
     if (transport) q.set("walk_max", "10");
     if (policeNear) q.set("police_max", "15");
     if (maxRent < 400) q.set("max_rent", String(maxRent));
     fetch(`${API}/listings?${q}`).then(r => r.json()).then(setItems).catch(() => {});
-  }, [campus, women, transport, policeNear, maxRent]);
+  }, [campus, women, transport, policeNear, maxRent, beds, baths, furn, bills]);
 
   const deck = items
     .filter(l => !passed.includes(l.id) && !saved.some(s => s.id === l.id))
     .map(l => ({ ...l, score: fit(l) }))
     .sort((a, b) => (women !== "all" ? (b.safety ?? 0) - (a.safety ?? 0) || b.score - a.score : b.score - a.score));
   const current = deck[0];
-  const campusName = campuses.find(c => c.id === campus)?.name;
+  const place = campuses.find(c => c.id === campus);
+  const campusName = place?.name;
+  const toggle = (list, set, v) => set(list.includes(v) ? list.filter(x => x !== v) : [...list, v].sort());
+  const openDetails = useCallback(l => setOpenHome(l), []);
   const seen = items.length - deck.length;
 
   const decide = useCallback(dir => {
@@ -293,7 +327,7 @@ export default function Home() {
 
   useEffect(() => {
     const onKey = e => {
-      if (["INPUT", "SELECT"].includes(e.target.tagName)) return;
+      if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName) || openHome) return;
       if (e.key === "ArrowRight") decide("save");
       if (e.key === "ArrowLeft") decide("pass");
       if (e.key === "ArrowUp") { e.preventDefault(); decide("star"); }
@@ -302,41 +336,100 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [decide, undo, showFilters, showMap]);
+  }, [decide, undo, showFilters, showMap, openHome]);
 
-  const reset = () => { setCampus(""); setWomen("all"); setTransport(false); setPoliceNear(false); setMaxRent(400); setPassed([]); setHistory([]); };
+  const reset = () => { setCampus(""); setWomen("all"); setTransport(false); setPoliceNear(false); setMaxRent(400); setBeds([]); setBaths([]); setFurn("any"); setBills("any"); setPassed([]); setHistory([]); };
   const shortlist = [...saved].sort((a, b) => Number(!!b.star) - Number(!!a.star));
 
   return (
     <div className="nest">
       <Backdrop />
       <header className="nest-bar">
-        <Link href="/" className="nest-logo">CampusNest</Link>
+        <Link href="/" className="nest-logo">Nivasya</Link>
         <div className="nest-prog">
           {items.length ? `${Math.min(seen + 1, items.length)} of ${items.length} rooms, best matches first` : "Finding rooms..."}
           <i><b style={{ width: `${items.length ? (seen / items.length) * 100 : 0}%` }} /></i>
         </div>
         <div className="nest-right">
-          <button className={`nest-btn${showFilters ? " active" : ""}`} onClick={() => setShowFilters(v => !v)} aria-pressed={showFilters}>Filters</button>
-          <button className={`nest-btn${showMap ? " active" : ""}`} onClick={() => setShowMap(v => !v)} aria-pressed={showMap}>Map</button>
+          <button className={`nest-btn${showFilters ? " active" : ""}`} onClick={() => setShowFilters(v => !v)} aria-pressed={showFilters}><Ic n="filter" size={16} /> Filters</button>
+          <button className={`nest-btn${showMap ? " active" : ""}`} onClick={() => setShowMap(v => !v)} aria-pressed={showMap}><Ic n="map" size={16} /> Map</button>
+          <button className={`nest-btn${showList ? " active" : ""}`} onClick={() => setShowList(v => !v)} aria-pressed={showList}>
+            <Ic n="heart" size={16} /> Shortlist{saved.length > 0 && <b className="badge">{saved.length}</b>}
+          </button>
           <button className="nest-btn icon" onClick={toggleTheme} aria-label={dark ? "Switch to light mode" : "Switch to night mode"}>
             <Ic n={dark ? "sun" : "moon"} size={18} />
           </button>
-          <Link href="/login" className="nest-btn">Log in</Link>
+          {user ? (
+            <div className="acct">
+              <button className="nest-btn acct-btn" onClick={() => setMenuOpen(v => !v)} aria-expanded={menuOpen}>
+                <span className="acct-av">{user.name[0]}</span>{user.name.split(" ")[0]}
+              </button>
+              {menuOpen && (
+                <div className="acct-menu">
+                  <Link href={user.role === "owner" ? "/owner" : "/subleaser"}>{user.role === "owner" ? "Owner dashboard" : "My account"}</Link>
+                  <button onClick={signOut}>Log out</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className="nest-btn">Log in</Link>
+          )}
         </div>
       </header>
 
-      <div className={`nest-main${showFilters ? "" : " no-left"}`}>
+      <div className={`nest-main${showFilters ? "" : " no-left"}${showMap ? "" : " no-right"}`}>
         <aside className="rail" hidden={!showFilters}>
           <h2>Your preferences</h2>
           {error && <p className="error">{error}</p>}
           <label className="field">
-            <span>Your campus</span>
+            <span>Your location</span>
             <select value={campus} onChange={e => setCampus(e.target.value)}>
-              <option value="">Choose a campus</option>
-              {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value="">Anywhere in Australia</option>
+              {[["City", "Cities"], ["University", "Universities"], ["Suburb", "Suburbs"]].map(([g, label]) => (
+                <optgroup key={g} label={label}>
+                  {campuses.filter(c => c.group === g).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </optgroup>
+              ))}
             </select>
+            <small className="seg-note">Work, uni or anywhere you travel to often.</small>
           </label>
+
+          <div className="field">
+            <span>Bedrooms</span>
+            <div className="chips" role="group" aria-label="Bedrooms">
+              {[1, 2, 3, 4, 5, 6].map(n => (
+                <button key={n} type="button" aria-pressed={beds.includes(n)} className={beds.includes(n) ? "on" : ""} onClick={() => toggle(beds, setBeds, n)}>{n}{n === 6 ? "+" : ""}</button>
+              ))}
+            </div>
+            <small className="seg-note">{beds.length ? `${beds.join(", ")} bedroom homes` : "Any number. Pick as many as you like."}</small>
+          </div>
+
+          <div className="field">
+            <span>Bathrooms</span>
+            <div className="chips" role="group" aria-label="Bathrooms">
+              {[1, 2, 3].map(n => (
+                <button key={n} type="button" aria-pressed={baths.includes(n)} className={baths.includes(n) ? "on" : ""} onClick={() => toggle(baths, setBaths, n)}>{n}{n === 3 ? "+" : ""}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <span>Furnishing</span>
+            <div className="seg" role="radiogroup" aria-label="Furnishing">
+              {[["any", "Any"], ["yes", "Furnished"], ["no", "Unfurnished"]].map(([k, l]) => (
+                <button key={k} type="button" role="radio" aria-checked={furn === k} className={furn === k ? "on" : ""} onClick={() => setFurn(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <span>Bills</span>
+            <div className="seg" role="radiogroup" aria-label="Bills">
+              {[["any", "Any"], ["yes", "Included"], ["no", "Not included"]].map(([k, l]) => (
+                <button key={k} type="button" role="radio" aria-checked={bills === k} className={bills === k ? "on" : ""} onClick={() => setBills(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
 
           <div className="field">
             <span>Who lives there</span>
@@ -391,27 +484,50 @@ export default function Home() {
             <button className="nest-act star sm" onClick={() => decide("star")} disabled={!current} aria-label="Top pick"><Ic n="star" size={22} /></button>
             <button className="nest-act save" onClick={() => decide("save")} disabled={!current} aria-label="Save"><Ic n="heart" size={30} /></button>
           </div>
+          {current && (
+            <button className="detail-btn" onClick={() => setOpenHome(current)}>
+              <Ic n="chat" size={16} /> View details and message the owner
+            </button>
+          )}
           <p className="nest-keys"><kbd>←</kbd> pass <kbd>→</kbd> save <kbd>↑</kbd> top pick <kbd>Z</kbd> undo <kbd>F</kbd> hide panels</p>
         </main>
 
-        <aside className="rail">
-          {showMap && <GeoPicker campuses={campuses} campus={campus} onPick={setCampus} rooms={items} current={current} saved={saved} />}
-          <h2>Shortlist ({saved.length})</h2>
-          {saved.length === 0 && <p className="hint">Rooms you save show up here. Top picks go first.</p>}
-          <ul className="nest-list">
-            {shortlist.map(l => (
-              <li key={l.id} className={l.star ? "top" : ""}>
-                <div>
-                  <p className="v">{l.star ? "★ " : ""}{l.suburb}, ${l.rent}/wk</p>
-                  <p className="k">{l.title}</p>
-                  <p className="k">{l.walk_min} min to {l.station}</p>
-                </div>
-                <button onClick={() => setSaved(saved.filter(s => s.id !== l.id))}>Remove</button>
-              </li>
-            ))}
-          </ul>
-        </aside>
+        {showMap && (
+          <aside className="rail map-rail">
+            <div className="map-head">
+              <h2>Homes across Australia</h2>
+              <p className="hint">{items.length} homes{campusName ? ` near ${campusName}` : ""}. Tap a dot for details.</p>
+            </div>
+            <RoomMap rooms={items} place={place} current={current} onOpen={openDetails} />
+          </aside>
+        )}
       </div>
+
+      {showList && (
+        <div className="drawer-back" onClick={e => e.target === e.currentTarget && setShowList(false)}>
+          <aside className="drawer" aria-label="Shortlist">
+            <div className="drawer-head">
+              <h2>Shortlist ({saved.length})</h2>
+              <button className="modal-x" onClick={() => setShowList(false)} aria-label="Close shortlist">✕</button>
+            </div>
+            {saved.length === 0 && <p className="hint">Swipe right or tap the heart to save homes here. Top picks go first.</p>}
+            <ul className="nest-list">
+              {shortlist.map(l => (
+                <li key={l.id} className={l.star ? "top" : ""}>
+                  <button className="open" onClick={() => { setShowList(false); setOpenHome(l); }}>
+                    <p className="v">{l.star ? "★ " : ""}{l.suburb}, ${l.rent}/wk</p>
+                    <p className="k">{l.title}</p>
+                    <p className="k">{l.bedrooms ? `${l.bedrooms} bed · ${l.bathrooms || 1} bath · ` : ""}{l.walk_min} min to {l.station}</p>
+                  </button>
+                  <button onClick={() => setSaved(saved.filter(s => s.id !== l.id))}>Remove</button>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      )}
+
+      {openHome && <Details key={openHome.id} l={openHome} placeName={campusName} onClose={() => setOpenHome(null)} />}
     </div>
   );
 }
