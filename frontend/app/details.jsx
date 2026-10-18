@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { photoFor } from "./photos";
 
 const API = process.env.NEXT_PUBLIC_API;
 
@@ -68,6 +69,10 @@ export function Details({ l, placeName, onClose }) {
     <div className="modal-back" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="home-title">
         <button className="modal-x" onClick={onClose} aria-label="Close">✕</button>
+        <div className="modal-photo">
+          <img src={photoFor(l, 1000)} alt={`Sample photo for ${l.title}`} onError={e => { e.currentTarget.parentElement.style.display = "none"; }} />
+          <span className="photo-tag">Sample photo</span>
+        </div>
         <p className="modal-sub">{l.suburb}</p>
         <h2 id="home-title">{l.title}</h2>
         <p className="modal-rent">${l.rent} <span>/ week, about ${month.toLocaleString()} a month</span></p>

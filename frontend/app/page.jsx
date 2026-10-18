@@ -4,6 +4,7 @@ import Link from "next/link";
 import "./home.css";
 import dynamic from "next/dynamic";
 import { Details, Specs, Amenities } from "./details";
+import { photoFor } from "./photos";
 
 const RoomMap = dynamic(() => import("./map"), { ssr: false, loading: () => <div className="room-map loading">Loading map...</div> });
 
@@ -127,6 +128,8 @@ function SafetyHelp() {
 
 function Card({ l, campusName, behind, leaving, onDecide }) {
   const [d, setD] = useState({ x: 0, y: 0, on: false });
+  const [imgOk, setImgOk] = useState(true);
+  const photo = photoFor(l);
   const o = useRef(null);
   const h = HOUSEHOLD[l.household];
   const why = reasons(l, campusName);
@@ -164,7 +167,7 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
       <span className="nest-stamp pass" style={{ opacity: op("pass") }}>PASS</span>
       <span className="nest-stamp star" style={{ opacity: op("star") }}>TOP PICK</span>
 
-      <div className="nest-cover" style={{ backgroundColor: "#2a1a6e", backgroundImage: `radial-gradient(circle at 85% 12%, rgba(255,255,255,.2), transparent 45%), ${COVERS[l.id % COVERS.length]}` }}>
+      <div className="nest-cover" style={{ backgroundColor: "#2a1a6e", backgroundSize: "cover", backgroundPosition: "center", backgroundImage: `linear-gradient(180deg, rgba(22,18,58,.15), rgba(22,18,58,.78)), ${imgOk ? `url("${photo}"), ` : ""}${COVERS[l.id % COVERS.length]}` }}>
         <span className={`tag ${h.cls}`} title={h.tip}><Ic n={h.icon} size={14} />{h.label}</span>
         <div className="fit" style={{ "--p": l.score }} title="How well this room fits your needs"><span>{l.score}<small>fit</small></span></div>
         <div>
@@ -215,8 +218,8 @@ function Card({ l, campusName, behind, leaving, onDecide }) {
         </div>
 
         <div className="photo">
-          {l.photo ? <img src={`${API}${l.photo}`} alt={l.title} /> : <RoomArt />}
-          {!l.photo && <span className="photo-tag">Room photos coming soon</span>}
+          {imgOk ? <img src={photo} alt={`Sample photo for ${l.title}`} draggable={false} onError={() => setImgOk(false)} /> : <RoomArt />}
+          <span className="photo-tag">{imgOk ? "Sample photo" : "Photos coming soon"}</span>
         </div>
       </div>
     </article>
@@ -514,6 +517,7 @@ export default function Home() {
             <ul className="nest-list">
               {shortlist.map(l => (
                 <li key={l.id} className={l.star ? "top" : ""}>
+                  <img className="thumb" src={photoFor(l, 160)} alt="" onError={e => { e.currentTarget.style.visibility = "hidden"; }} />
                   <button className="open" onClick={() => { setShowList(false); setOpenHome(l); }}>
                     <p className="v">{l.star ? "★ " : ""}{l.suburb}, ${l.rent}/wk</p>
                     <p className="k">{l.title}</p>
