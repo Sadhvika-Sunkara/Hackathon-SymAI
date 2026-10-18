@@ -234,6 +234,7 @@ export default function Home() {
   const [furn, setFurn] = useState("any");      // any | yes | no
   const [bills, setBills] = useState("any");    // any | yes | no
   const [showList, setShowList] = useState(false);
+  const [toId, setToId] = useState(""); // map "To": a chosen home, or the home on top of the deck
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openHome, setOpenHome] = useState(null);
@@ -304,6 +305,10 @@ export default function Home() {
   const current = deck[0];
   const place = campuses.find(c => c.id === campus);
   const campusName = place?.name;
+  const target = items.find(h => String(h.id) === toId) || current;
+  const small = () => typeof window !== "undefined" && window.matchMedia("(max-width: 1100px)").matches;
+  const toggleFilters = () => { const next = !showFilters; setShowFilters(next); if (next && small()) setShowMap(false); };
+  const toggleMap = () => { const next = !showMap; setShowMap(next); if (next && small()) setShowFilters(false); };
   const toggle = (list, set, v) => set(list.includes(v) ? list.filter(x => x !== v) : [...list, v].sort());
   const openDetails = useCallback(l => setOpenHome(l), []);
   const seen = items.length - deck.length;
@@ -354,10 +359,10 @@ export default function Home() {
           <i><b style={{ width: `${items.length ? (seen / items.length) * 100 : 0}%` }} /></i>
         </div>
         <div className="nest-right">
-          <button className={`nest-btn${showFilters ? " active" : ""}`} onClick={() => setShowFilters(v => !v)} aria-pressed={showFilters}><Ic n="filter" size={16} /> Filters</button>
-          <button className={`nest-btn${showMap ? " active" : ""}`} onClick={() => setShowMap(v => !v)} aria-pressed={showMap}><Ic n="map" size={16} /> Map</button>
-          <button className={`nest-btn${showList ? " active" : ""}`} onClick={() => setShowList(v => !v)} aria-pressed={showList}>
-            <Ic n="heart" size={16} /> Shortlist{saved.length > 0 && <b className="badge">{saved.length}</b>}
+          <button className={`nest-btn${showFilters ? " active" : ""}`} onClick={toggleFilters} aria-pressed={showFilters} aria-label="Filters"><Ic n="filter" size={16} /><span className="lbl">Filters</span></button>
+          <button className={`nest-btn${showMap ? " active" : ""}`} onClick={toggleMap} aria-pressed={showMap} aria-label="Map"><Ic n="map" size={16} /><span className="lbl">Map</span></button>
+          <button className={`nest-btn${showList ? " active" : ""}`} onClick={() => setShowList(v => !v)} aria-pressed={showList} aria-label="Shortlist">
+            <Ic n="heart" size={16} /><span className="lbl">Shortlist</span>{saved.length > 0 && <b className="badge">{saved.length}</b>}
           </button>
           <button className="nest-btn icon" onClick={toggleTheme} aria-label={dark ? "Switch to light mode" : "Switch to night mode"}>
             <Ic n={dark ? "sun" : "moon"} size={18} />
@@ -365,7 +370,7 @@ export default function Home() {
           {user ? (
             <div className="acct">
               <button className="nest-btn acct-btn" onClick={() => setMenuOpen(v => !v)} aria-expanded={menuOpen}>
-                <span className="acct-av">{user.name[0]}</span>{user.name.split(" ")[0]}
+                <span className="acct-av">{user.name[0]}</span><span className="lbl">{user.name.split(" ")[0]}</span>
               </button>
               {menuOpen && (
                 <div className="acct-menu">
@@ -382,7 +387,10 @@ export default function Home() {
 
       <div className={`nest-main${showFilters ? "" : " no-left"}${showMap ? "" : " no-right"}`}>
         <aside className="rail" hidden={!showFilters}>
-          <h2>Your preferences</h2>
+          <div className="sheet-head">
+            <h2>Your preferences</h2>
+            <button type="button" className="sheet-x" onClick={() => setShowFilters(false)} aria-label="Close filters">✕</button>
+          </div>
           {error && <p className="error">{error}</p>}
           <label className="field">
             <span>Your location</span>
@@ -462,6 +470,7 @@ export default function Home() {
           </label>
           <button className="reset" onClick={reset}>Clear filters</button>
           <SafetyHelp />
+          <button type="button" className="sheet-done" onClick={() => setShowFilters(false)}>Show {items.length} {items.length === 1 ? "home" : "homes"}</button>
         </aside>
 
         <main className="nest-stage">
@@ -497,11 +506,44 @@ export default function Home() {
 
         {showMap && (
           <aside className="rail map-rail">
-            <div className="map-head">
+            <div className="map-head sheet-head">
               <h2>Homes across Australia</h2>
-              <p className="hint">{items.length} homes{campusName ? ` near ${campusName}` : ""}. Tap a dot for details.</p>
+              <button type="button" className="sheet-x" onClick={() => setShowMap(false)} aria-label="Close map">✕</button>
             </div>
-            <RoomMap rooms={items} place={place} current={current} onOpen={openDetails} />
+            <div className="route">
+              <label className="route-row">
+                <span className="route-dot from" aria-hidden="true" />
+                <span className="route-k">From</span>
+                <select value={campus} onChange={e => { setCampus(e.target.value); setToId(""); }} aria-label="From">
+                  <option value="">Choose a starting point</option>
+                  {[["City", "Cities"], ["University", "Universities"], ["Suburb", "Suburbs"]].map(([g, label]) => (
+                    <optgroup key={g} label={label}>
+                      {campuses.filter(c => c.group === g).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+              <label className="route-row">
+                <span className="route-dot to" aria-hidden="true" />
+                <span className="route-k">To</span>
+                <select value={target ? String(target.id) : ""} onChange={e => setToId(e.target.value)} aria-label="To" disabled={!items.length}>
+                  {!target && <option value="">Choose a home</option>}
+                  {items.map(h => <option key={h.id} value={h.id}>{h.suburb}: {h.title}</option>)}
+                </select>
+              </label>
+              {place && target ? (
+                <div className="route-out">
+                  <p><b>{target.campus_km} km</b> from {place.name} to {target.suburb}</p>
+                  <div className="route-act">
+                    <a href={`https://www.google.com/maps/dir/?api=1&origin=${place.lat},${place.lng}&destination=${target.lat},${target.lng}&travelmode=transit`} target="_blank" rel="noopener noreferrer">Get directions ↗</a>
+                    <button type="button" onClick={() => setOpenHome(target)}>View home</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="hint">Choose where you're coming from to see the distance to each home. {items.length} homes on the map.</p>
+              )}
+            </div>
+            <RoomMap rooms={items} place={place} current={target} onOpen={openDetails} />
           </aside>
         )}
       </div>

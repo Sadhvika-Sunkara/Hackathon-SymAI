@@ -77,7 +77,7 @@ export default function RoomMap({ rooms, place, current, onOpen }) {
     });
     if (place) {
       L.circleMarker([place.lat, place.lng], { radius: 9, weight: 3, color: "#0e9f9a", fillColor: "#fff", fillOpacity: 1 })
-        .bindTooltip(place.name, { permanent: true, direction: "top", className: "map-place" })
+        .bindTooltip(place.name, { permanent: true, direction: "bottom", offset: [0, 8], className: "map-place" })
         .addTo(layer.current);
       // Distance line from your location to the home on top of the deck
       if (current) {
